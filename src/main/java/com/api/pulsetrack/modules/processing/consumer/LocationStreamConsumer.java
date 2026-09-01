@@ -16,10 +16,16 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Map;
 
 @Component
 public class LocationStreamConsumer implements StreamListener<String, MapRecord<String, String, String>> {
+
+    private static final String CACHE_PREFIX = "order:location:";
+    private static final String THROTTLE_PREFIX = "order:throttle:";
+    private static final long THROTTLE_SECONDS = 5;
+
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final OrderRepository orderRepository;
@@ -50,13 +56,21 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
             BigDecimal longitude = new BigDecimal(valueMap.get("longitude"));
             Long timestamp = Long.parseLong(valueMap.get("timestamp"));
 
-            String cacheKey = "order:location:" + orderId;
+            String cacheKey = CACHE_PREFIX + orderId;
             LocationCacheDTO cacheData = new LocationCacheDTO(orderId, latitude, longitude, timestamp);
             String jsonValue = objectMapper.writeValueAsString(cacheData);
+
             redisTemplate.opsForValue().set(cacheKey, jsonValue);
 
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + orderId));
+            LocationTrackingResponse trackingResponse = new LocationTrackingResponse(orderId, latitude, longitude, timestamp);
+            sseEmitterService.sendLocationUpdate(trackingResponse);
+
+            String throttleKey = THROTTLE_PREFIX + orderId;
+            Boolean canSaveToDb = redisTemplate.opsForValue().setIfAbsent(throttleKey, "1", Duration.ofSeconds(THROTTLE_SECONDS));
+
+            if(Boolean.TRUE.equals(canSaveToDb)) {
+                Order order = orderRepository.findById(orderId)
+                        .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + orderId));
 
             OrderLocationHistory history = new OrderLocationHistory();
             history.setOrder(order);
@@ -67,10 +81,9 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
 
             System.out.println("Worker [OK] -> Pedido: " + orderId + " | Lat: " + latitude + " | Lng: " + longitude);
 
-            LocationTrackingResponse trackingResponse = new LocationTrackingResponse(orderId, latitude, longitude, timestamp);
-            sseEmitterService.sendLocationUpdate(trackingResponse);
-
-
+            } else {
+                System.out.println("Worker [THROTTLED] -> Pedido: " + orderId + " | Lat: " + latitude + " | Lng: " + longitude);
+            }
         } catch (Exception e) {
 
             System.err.println("Erro ao processar mensagem do Redis Stream: " + e.getMessage());;
