@@ -6,6 +6,9 @@ import com.api.pulsetrack.modules.order.repo.OrderRepository;
 import com.api.pulsetrack.modules.processing.dto.LocationCacheDTO;
 import com.api.pulsetrack.modules.processing.model.OrderLocationHistory;
 import com.api.pulsetrack.modules.processing.repo.OrderLocationHistoryRepository;
+import com.api.pulsetrack.modules.tracking.dto.LocationTrackingResponse;
+import com.api.pulsetrack.modules.tracking.service.SseEmitterService;
+import org.hibernate.sql.exec.ExecutionException;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
@@ -22,16 +25,19 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
     private final OrderRepository orderRepository;
     private final OrderLocationHistoryRepository historyRepository;
     private final ObjectMapper objectMapper;
+    private final SseEmitterService sseEmitterService;
 
     public LocationStreamConsumer(
             RedisTemplate<String, Object> redisTemplate,
             OrderRepository orderRepository,
             OrderLocationHistoryRepository historyRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            SseEmitterService sseEmitterService) {
         this.redisTemplate = redisTemplate;
         this.orderRepository = orderRepository;
         this.historyRepository = historyRepository;
         this.objectMapper = objectMapper;
+        this.sseEmitterService = sseEmitterService;
     }
 
     @Override
@@ -61,10 +67,11 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
 
             System.out.println("Worker [OK] -> Pedido: " + orderId + " | Lat: " + latitude + " | Lng: " + longitude);
 
+            LocationTrackingResponse trackingResponse = new LocationTrackingResponse(orderId, latitude, longitude, timestamp);
+            sseEmitterService.sendLocationUpdate(trackingResponse);
 
 
-
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
 
             System.err.println("Erro ao processar mensagem do Redis Stream: " + e.getMessage());;
         }
