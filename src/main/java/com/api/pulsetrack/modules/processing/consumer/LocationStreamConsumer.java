@@ -63,6 +63,7 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
             redisTemplate.opsForValue().set(cacheKey, jsonValue);
 
             LocationTrackingResponse trackingResponse = new LocationTrackingResponse(orderId, latitude, longitude, timestamp);
+            System.out.println("--> [CONSUMER] Notificando SseEmitterService para orderId: " + orderId);
             sseEmitterService.sendLocationUpdate(trackingResponse);
 
             String throttleKey = THROTTLE_PREFIX + orderId;
