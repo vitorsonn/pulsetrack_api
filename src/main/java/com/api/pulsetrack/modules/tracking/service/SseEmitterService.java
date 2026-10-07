@@ -55,4 +55,18 @@ public class SseEmitterService {
             System.out.println("--> [SSE SERVICE] NENHUM CLIENTE CONECTADO ouvindo o orderId: " + payload.orderId() + " | Emitters ativos: " + emitters.keySet());
         }
     }
+
+    public void closeStream(Long orderId) {
+        SseEmitter emitter = emitters.get(orderId);
+        if (emitter != null) {
+            try {
+                emitter.complete();
+            } catch (Exception e) {
+                System.err.println("--> [SSE SERVICE] Erro ao fechar emitter: " + e.getMessage());
+            } finally {
+                emitters.remove(orderId);
+                System.out.println("--> [SSE SERVICE] Stream SSE encerrada com sucesso para orderId: " + orderId);
+            }
+        }
+    }
 }

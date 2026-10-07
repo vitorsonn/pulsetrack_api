@@ -46,5 +46,15 @@ public class OrderService {
         return OrderResponse.fromEntity(updatedOrder);
     }
 
+    @Transactional
+    public OrderResponse completeOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado para o ID: " + id));
+
+        order.setOrderStatus(OrderStatus.COMPLETED);
+        Order completedOrder = orderRepository.save(order);
+        return OrderResponse.fromEntity(completedOrder);
+    }
+
 
 }
