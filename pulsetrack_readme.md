@@ -24,6 +24,28 @@ docker compose up -d --build
 A API ficará disponível na porta `8080` por padrão. O endpoint para probes de
 disponibilidade é `GET /actuator/health`.
 
+### Variáveis em um provedor de deploy
+
+Se a API for publicada separadamente do `docker compose`, configure no serviço
+da aplicação as variáveis abaixo apontando para os serviços gerenciados pelo
+provedor. Não use `localhost` para PostgreSQL ou Redis em produção:
+
+```text
+POSTGRES_HOST=<host interno do PostgreSQL>
+POSTGRES_PORT=5432
+POSTGRES_SSLMODE=require
+POSTGRES_DB=<nome do banco>
+POSTGRES_USER=<usuário do banco>
+POSTGRES_PASSWORD=<senha do banco>
+REDIS_HOST=<host interno do Redis>
+REDIS_PORT=6379
+CORS_ALLOWED_ORIGINS=https://<domínio-do-frontend>
+```
+
+No Docker Compose, os hosts são `postgres` e `redis` e já são configurados
+automaticamente. O erro `Unable to determine Dialect` do Hibernate é
+secundário: ele aparece quando a conexão PostgreSQL falha.
+
 Para acompanhar os logs:
 
 ```bash
