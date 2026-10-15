@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/orders")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -34,6 +36,18 @@ public class OrderController {
     public ResponseEntity<OrderResponse> findById(@PathVariable Long id) {
         OrderResponse response = orderService.getOrderById(id);
         return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping
+    public ResponseEntity<List<OrderResponse>> getOrders(
+            @RequestParam(required = false) OrderStatus status) {
+
+        if (status != null) {
+            return ResponseEntity.ok(orderService.findOrdersByStatus(status));
+        }
+
+        return ResponseEntity.ok(orderService.findAllOrders());
     }
 
     @PatchMapping("/{id}/status")

@@ -8,6 +8,8 @@ import com.api.pulsetrack.modules.order.repo.OrderRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class OrderService {
 
@@ -18,22 +20,50 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse createOrder(OrderCreateRequest request){
+    public OrderResponse createOrder(OrderCreateRequest request) {
         Order order = new Order();
         order.setCustomerName(request.customerName());
         order.setDeliveryAddress(request.deliveryAddress());
-        order.setOrderStatus(OrderStatus.PROCESSING);
-        orderRepository.save(order);
-
+        order.setOrderStatus(OrderStatus.CREATED);
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.fromEntity(savedOrder);
+    }
 
+
+
+
+    public List<OrderResponse> findAllOrders() {
+        return orderRepository.findAll()
+                .stream()
+                .map(order -> new OrderResponse(
+                        order.getId(),
+                        order.getCustomerName(),
+                        order.getDeliveryAddress(),
+                        order.getOrderStatus(),
+                        order.getCreatedAt(),
+                        order.getUpdatedAt()
+                ))
+                .toList();
     }
 
     public OrderResponse getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + orderId));
         return OrderResponse.fromEntity(order);
+    }
+
+    public List<OrderResponse> findOrdersByStatus(OrderStatus status) {
+        return orderRepository.findByOrderStatus(status)
+                .stream()
+                .map(order -> new OrderResponse(
+                        order.getId(),
+                        order.getCustomerName(),
+                        order.getDeliveryAddress(),
+                        order.getOrderStatus(),
+                        order.getCreatedAt(),
+                        order.getUpdatedAt()
+                ))
+                .toList();
     }
 
     @Transactional
@@ -51,7 +81,7 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado para o ID: " + id));
 
-        order.setOrderStatus(OrderStatus.COMPLETED);
+        order.setOrderStatus(OrderStatus.DELIVERED);
         Order completedOrder = orderRepository.save(order);
         return OrderResponse.fromEntity(completedOrder);
     }

@@ -1,9 +1,8 @@
 package com.api.pulsetrack.modules.order.model;
 
 public enum OrderStatus {
-    PENDING,
+    CREATED,
     IN_TRANSIT,
-    PROCESSING,
-    COMPLETED,
+    DELIVERED,
     CANCELLED
 }
