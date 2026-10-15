@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/deliveries")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class IngestionController {
 
     private final LocationProducerService producerService;

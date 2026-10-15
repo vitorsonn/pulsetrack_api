@@ -12,7 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/tracking")
-@CrossOrigin(origins = "http://localhost:4200",
+@CrossOrigin(origins = "${app.cors.allowed-origins}",
         allowedHeaders = "*",
         methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PATCH, RequestMethod.OPTIONS})
 public class TrackingController {

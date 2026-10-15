@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class OrderController {
 
     private final OrderService orderService;
@@ -60,7 +60,6 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/complete")
-    @CrossOrigin(origins = "http://localhost:4200")
     public ResponseEntity<OrderResponse> completeOrder(@PathVariable Long id) {
         OrderResponse completedOrder = orderService.completeOrder(id);
         sseEmitterService.closeStream(id);

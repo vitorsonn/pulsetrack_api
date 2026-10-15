@@ -8,6 +8,7 @@ import com.api.pulsetrack.modules.processing.model.OrderLocationHistory;
 import com.api.pulsetrack.modules.processing.repo.OrderLocationHistoryRepository;
 import com.api.pulsetrack.modules.tracking.dto.LocationTrackingResponse;
 import com.api.pulsetrack.modules.tracking.service.TrackingUpdatePublisher;
+import com.api.pulsetrack.shared.exception.ResourceNotFoundException;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
@@ -111,7 +112,8 @@ public class LocationStreamConsumer implements StreamListener<String, MapRecord<
 
         if (Boolean.TRUE.equals(canSaveToDb)) {
             Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + orderId));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Pedido não encontrado: " + orderId));
 
             OrderLocationHistory history = new OrderLocationHistory();
             history.setOrder(order);
